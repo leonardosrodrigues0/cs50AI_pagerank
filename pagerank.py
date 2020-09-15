@@ -87,7 +87,25 @@ def sample_pagerank(corpus, damping_factor, n):
     their estimated PageRank value (a value between 0 and 1). All
     PageRank values should sum to 1.
     """
-    raise NotImplementedError
+    
+    # Initialize dictionary.
+    PR = dict()
+    for page in corpus:
+        PR[page] = 0
+
+    # Increment value for normalization.
+    inc = 1 / n
+
+    # Choose first page at random.
+    page = random.choice(list(PR.keys()))
+
+    for _ in range(n):
+        PR[page] += inc
+
+        prob_dist = transition_model(corpus, page, damping_factor)
+        page = random.choices(list(prob_dist.keys()), weights=list(prob_dist.values()))[0]
+    
+    return PR
 
 
 def iterate_pagerank(corpus, damping_factor):
@@ -99,7 +117,46 @@ def iterate_pagerank(corpus, damping_factor):
     their estimated PageRank value (a value between 0 and 1). All
     PageRank values should sum to 1.
     """
-    raise NotImplementedError
+    
+    # New corpus to change pages with no link.
+    new_corpus = corpus.copy()
+    for page in new_corpus:
+        if len(new_corpus[page]) == 0:
+            new_corpus[page] = set(new_corpus.keys())
+
+    N = len(corpus)
+    starting_value = 1 / N
+
+    # Initializing 2 dicts for iteration.
+    old_PR = dict()
+    PR = dict()
+    for page in new_corpus:
+        old_PR[page] = starting_value
+
+    # Constant factor in iterations.
+    factor = (1 - damping_factor) / N
+
+    while(True):
+        repeat = False
+
+        for page in new_corpus:
+            sum = 0
+            for origin_page in new_corpus:
+                if page in new_corpus[origin_page]:
+                    sum += old_PR[origin_page] / len(new_corpus[origin_page])
+
+            PR[page] = factor + damping_factor * sum
+            
+            if abs(PR[page] - old_PR[page]) > 0.001:
+                repeat = True
+
+        if not repeat:
+            break
+
+        for page in new_corpus:
+            old_PR[page] = PR[page]
+
+    return PR
 
 
 if __name__ == "__main__":
